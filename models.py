@@ -13,5 +13,6 @@ class User(UserMixin, db.Model):
     email_mfa_completed = db.Column(db.Boolean, default=False)
     totp_secret = db.Column(db.String(16), nullable=True)
     totp_mfa_completed = db.Column(db.Boolean, default=False)
+    magic_link_completed = db.Column(db.Boolean, default=False)
 
 

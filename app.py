@@ -13,6 +13,8 @@ import pyotp
 import qrcode
 import io
 import base64
+import uuid
+from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
@@ -218,6 +220,69 @@ def verify_totp():
         flash('Invalid OTP. Please try again.', 'danger')
         return redirect(url_for('totp_setup'))
 
+
+@app.route('/magic-link', methods=['GET', 'POST'])
+@login_required
+def magic_link():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+
+        # Basic email validation
+        if '@' not in email or '.' not in email:
+            flash('Invalid email address.', 'danger')
+            return redirect(url_for('magic_link'))
+
+        # Generate unique token
+        token = str(uuid.uuid4())
+        session['magic_link_token'] = token
+        session['magic_link_email'] = email
+        session['magic_link_timestamp'] = datetime.utcnow().isoformat()
+
+        # Generate link
+        link = url_for('verify_magic_link', token=token, _external=True)
+
+        # Send email
+        msg = Message('Magic Link for Authentication Study', sender=os.getenv('MAIL_USERNAME'), recipients=[email])
+        msg.body = f"""
+        Here is the magic link for the authentication study. It will expire in 15 minutes.
+        
+        Please click the link to verify: {link}"""
+        mail.send(msg)
+
+        flash('Magic link sent to your email.', 'success')
+        return redirect(url_for('home'))
+
+    return render_template('magic_link.html')
+
+@app.route('/verify-magic-link/<token>')
+@login_required
+def verify_magic_link(token):
+    timestamp_str = session.get('magic_link_timestamp')
+    if not timestamp_str:
+        flash('Invalid or expired magic link.', 'danger')
+        return redirect(url_for('home'))
+
+    timestamp = datetime.fromisoformat(timestamp_str)
+    now = datetime.utcnow()
+
+    # Check if the link has expired (older than 15 minutes)
+    if now - timestamp > timedelta(minutes=15):
+        flash('Magic link has expired. Please request a new one.', 'danger')
+        session.pop('magic_link_token', None)
+        session.pop('magic_link_email', None)
+        session.pop('magic_link_timestamp', None)
+        return redirect(url_for('magic_link'))
+
+    if token == session.get('magic_link_token'):
+        current_user.magic_link_completed = True
+        db.session.commit()
+        session.pop('magic_link_token', None)
+        session.pop('magic_link_email', None)
+        flash('Magic link verified successfully!', 'success')
+        return redirect(url_for('home'))
+    else:
+        flash('Invalid or expired magic link.', 'danger')
+        return redirect(url_for('home'))
 
 
 
