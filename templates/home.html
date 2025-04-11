@@ -1,40 +1,45 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
-  <h2>Welcome to the MFA Simulation App!</h2>
+<div class="container mt-5">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title text-primary">Multi-Factor Authentication Experiment</h2>
+      <p class="card-text">Follow these steps to complete the experiment:</p>
 
-  <ol class="list-group list-group-numbered">
+    <ol class="list-group">
+        <!-- Step 1: Register -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            Step 1: Register an Account
+            {% if current_user.is_authenticated %}
+                <span class="badge bg-success">✅</span>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
+            {% endif %}
+        </li>
 
-    <!-- Step 1: Register -->
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      Step 1: Register an Account
-      <span class="badge bg-success">✅</span>
-    </li>
+        <!-- Step 2: Log In -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            Step 2: Log In
+            {% if current_user.is_authenticated %}
+                <span class="badge bg-success">✅</span>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Log In</a>
+            {% endif %}
+        </li>
 
-    <!-- Step 2: Log In -->
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      Step 2: Log In
-      {% if current_user.is_authenticated %}
-        <span class="badge bg-success">✅</span>
-      {% else %}
-        <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm">Log In</a>
-      {% endif %}
-    </li>
-
-    <!-- Step 3: SMS OTP Setup -->
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      Step 3: SMS OTP Setup
-      {% if current_user.is_authenticated and current_user.sms_mfa_completed %}
-        <span class="badge bg-success">✅</span>
-      {% elif current_user.is_authenticated %}
-        <a href="{{ url_for('sms_otp') }}" class="btn btn-primary btn-sm">Set up SMS OTP</a>
-      {% else %}
-        <span class="text-muted">Login to set up SMS OTP</span>
-      {% endif %}
-    </li>
-
-
-
-  </ol>
+        <!-- Step 3: Set Up MFA -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            Step 3: SMS OTP
+            {% if current_user.is_authenticated and current_user.sms_mfa_completed %}
+                <span class="badge bg-success">✅</span>
+            {% elif current_user.is_authenticated %}
+                <a href="{{ url_for('sms_otp') }}" class="btn btn-primary">Set Up SMS OTP</a>
+            {% else %}
+                <span class="text-muted">Login to set up SMS OTP</span>
+            {% endif %}
+        </li>
+    </ol>
+</div>
+</div>
 </div>
 {% endblock %}

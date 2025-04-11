@@ -69,7 +69,12 @@ def logout():
 @login_required
 def sms_otp():
     if request.method == 'POST':
-        phone = request.form.get('phone')
+        phone = request.form.get('phone', '').strip()
+
+        if not phone.startswith('+') or not phone[1:].isdigit():
+            flash('Invalid phone number format. Please use international format, e.g., +447123456789.', 'danger')
+            return redirect(url_for('sms_otp'))
+
         otp = str(random.randint(100000, 999999))
         current_user.phone_number = phone
         session['otp'] = otp
@@ -92,7 +97,7 @@ def sms_otp():
 @login_required
 def verify_sms_otp():
     if request.method == 'POST':
-        otp_input = request.form.get('otp')
+        otp_input = request.form.get('otp', '').strip()
         if otp_input == session.get('otp'):
             current_user.sms_mfa_completed = True
             db.session.commit()
