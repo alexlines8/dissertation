@@ -1,4 +1,11 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block title %} Home {% endblock %}
+
 {% block content %}
-<h2>Welcome to the Fresh Flask App!</h2>
+<div class="text-center">
+    <h2 class="mt-4">Welcome to the MFA Demo</h2>
+    <p class="lead">This website will guide you through different authentication methods.</p>
+    <a href="/register" class="btn btn-primary btn-lg">Get Started</a>
+</div>
 {% endblock %}
