@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Set up Authenticator App</h2>
+    <p>Scan this QR code with your authenticator app:</p>
+    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code">
+
+    <form method="POST" action="{{ url_for('verify_totp') }}" class="mt-4">
+        <div class="mb-3">
+            <label for="otp">Enter OTP from your app</label>
+            <input type="text" name="otp" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-success">Verify OTP</button>
+    </form>
+</div>
+{% endblock %}

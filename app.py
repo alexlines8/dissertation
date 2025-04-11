@@ -9,6 +9,10 @@ import os
 import random
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
+import pyotp
+import qrcode
+import io
+import base64
 
 
 app = Flask(__name__)
@@ -175,6 +179,46 @@ def verify_email_otp():
             flash('Invalid OTP. Please try again.', 'danger')
 
     return render_template('verify_email_otp.html')
+
+@app.route('/totp-setup')
+@login_required
+def totp_setup():
+    # Generate a secret key for the user
+    if not current_user.totp_secret:
+        current_user.totp_secret = pyotp.random_base32()
+        db.session.commit()
+
+    # Generate provisioning URI for QR code
+    otp_uri = pyotp.totp.TOTP(current_user.totp_secret).provisioning_uri(
+        name=current_user.username,
+        issuer_name='MFA App'
+    )
+
+    # Generate QR code
+    qr = qrcode.make(otp_uri)
+    img_io = io.BytesIO()
+    qr.save(img_io, 'PNG')
+    img_io.seek(0)
+    img_base64 = base64.b64encode(img_io.getvalue()).decode()
+
+    return render_template('totp_setup.html', qr_code=img_base64)
+
+@app.route('/verify-totp', methods=['POST'])
+@login_required
+def verify_totp():
+    otp_input = request.form.get('otp', '').strip()
+
+    totp = pyotp.TOTP(current_user.totp_secret)
+    if totp.verify(otp_input):
+        current_user.totp_mfa_completed = True
+        db.session.commit()
+        flash('Authenticator app verified successfully!', 'success')
+        return redirect(url_for('home'))
+    else:
+        flash('Invalid OTP. Please try again.', 'danger')
+        return redirect(url_for('totp_setup'))
+
+
 
 
 @app.route('/create-db')
