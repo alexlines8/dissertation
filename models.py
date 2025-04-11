@@ -8,3 +8,5 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=True)
     password = db.Column(db.String(150), nullable=False)
+    phone_number = db.Column(db.String(20), unique=True, nullable=True)
+    sms_mfa_completed = db.Column(db.Boolean, default=False)

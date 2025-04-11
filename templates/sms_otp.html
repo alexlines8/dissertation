@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Set up SMS Verification</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="phone">Phone Number</label>
+            <input type="text" name="phone" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Send OTP</button>
+    </form>
+</div>
+{% endblock %}
