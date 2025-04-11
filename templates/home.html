@@ -1,11 +1,11 @@
-{% extends "base.html" %}
-
-{% block title %} Home {% endblock %}
-
+{% extends 'base.html' %}
 {% block content %}
-<div class="text-center">
-    <h2 class="mt-4">Welcome to the MFA Demo</h2>
-    <p class="lead">This website will guide you through different authentication methods.</p>
-    <a href="/register" class="btn btn-primary btn-lg">Get Started</a>
+<div class="container mt-4">
+  <h2>Welcome to the MFA Simulation App!</h2>
+  {% if current_user.is_authenticated %}
+    <p>Hello, {{ current_user.username }}! You are logged in.</p>
+  {% else %}
+    <p>Please <a href="{{ url_for('login') }}">log in</a> or <a href="{{ url_for('register') }}">register</a> to continue.</p>
+  {% endif %}
 </div>
 {% endblock %}
