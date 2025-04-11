@@ -7,6 +7,8 @@ from forms import RegisterForm, LoginForm
 from twilio.rest import Client
 import os
 import random
+from flask_mail import Mail, Message
+from dotenv import load_dotenv
 
 
 app = Flask(__name__)
@@ -18,9 +20,20 @@ bcrypt = Bcrypt(app)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+load_dotenv()
 
 twilio_client = Client(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN'))
 twilio_phone_number = os.getenv('TWILIO_PHONE_NUMBER')
+
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+
+mail = Mail(app)
+
 
 
 @login_manager.user_loader
@@ -109,6 +122,60 @@ def verify_sms_otp():
         else:
             flash('Invalid OTP. Please try again.', 'danger')
     return render_template('verify_sms_otp.html')
+
+
+@app.route('/email-otp', methods=['GET', 'POST'])
+@login_required
+def email_otp():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+
+        # Basic validation
+        if '@' not in email or '.' not in email:
+            flash('Invalid email address.', 'danger')
+            return redirect(url_for('email_otp'))
+
+        otp = str(random.randint(100000, 999999))
+        session['email_otp'] = otp
+        session['email_address'] = email
+
+        # Send email
+        msg = Message('OTP for Authentication Study', sender=os.getenv('MAIL_USERNAME'), recipients=[email])
+        msg.body = f"""
+        Hello! 
+        Your verification code is: {otp}
+        
+        Input this code into the website to unlock the next step"""
+        mail.send(msg)
+
+        flash('OTP sent to your email address.', 'success')
+        return redirect(url_for('verify_email_otp'))
+
+    return render_template('email_otp.html')
+
+@app.route('/verify-email-otp', methods=['GET', 'POST'])
+@login_required
+def verify_email_otp():
+    if request.method == 'POST':
+        otp_input = request.form.get('otp', '').strip()
+
+        if not otp_input.isdigit() or len(otp_input) != 6:
+            flash('Invalid OTP format. Please enter a 6-digit number.', 'danger')
+            return redirect(url_for('verify_email_otp'))
+
+        if otp_input == session.get('email_otp'):
+            current_user.email = session.get('email_address')
+            current_user.email_mfa_completed = True
+            db.session.commit()
+            session.pop('email_otp', None)
+            session.pop('email_address', None)
+            flash('Email verified successfully!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('Invalid OTP. Please try again.', 'danger')
+
+    return render_template('verify_email_otp.html')
+
 
 @app.route('/create-db')
 def create_db():
