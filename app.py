@@ -91,7 +91,7 @@ def logout():
 def sms_otp():
     if request.method == 'POST':
         country_code = request.form.get('country_code', '').strip()
-        phone_local = request.form.get('phone', '').strip()
+        phone_local = request.form.get('phone', '').strip().replace(' ', '').replace('-', '')
 
         # Basic validation
         if not country_code or not phone_local.isdigit():
@@ -106,11 +106,12 @@ def sms_otp():
         db.session.commit()
 
         # Send SMS
-        twilio_client.messages.create(
-            body=f'Your verification code is: {otp}',
-            from_=twilio_phone_number,
-            to=full_phone
-        )
+        print(otp)
+        #twilio_client.messages.create(
+        #    body=f'Your verification code is: {otp}',
+        #    from_=twilio_phone_number,
+        #    to=full_phone
+        #)
 
         flash('OTP sent to your phone number.', 'success')
         return redirect(url_for('verify_sms_otp'))
