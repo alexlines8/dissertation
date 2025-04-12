@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Email
 from models import User
 
 class RegisterForm(FlaskForm):
@@ -18,3 +18,7 @@ class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+class EmailOTPForm(FlaskForm):
+    email = StringField('Email Address', validators=[DataRequired(), Email()])
+    submit = SubmitField('Send OTP')

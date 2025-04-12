@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from models import db, User
-from forms import RegisterForm, LoginForm
+from forms import RegisterForm, LoginForm, EmailOTPForm
 from twilio.rest import Client
 import os
 import random
@@ -140,13 +140,10 @@ def verify_sms_otp():
 @app.route('/email-otp', methods=['GET', 'POST'])
 @login_required
 def email_otp():
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
+    form = EmailOTPForm()
 
-        # Basic validation
-        if '@' not in email or '.' not in email:
-            flash('Invalid email address.', 'danger')
-            return redirect(url_for('email_otp'))
+    if form.validate_on_submit():
+        email = form.email.data.strip()
 
         otp = str(random.randint(100000, 999999))
         session['email_otp'] = otp
@@ -164,7 +161,7 @@ def email_otp():
         flash('OTP sent to your email address.', 'success')
         return redirect(url_for('verify_email_otp'))
 
-    return render_template('email_otp.html')
+    return render_template('email_otp.html', form=form)
 
 @app.route('/verify-email-otp', methods=['GET', 'POST'])
 @login_required
