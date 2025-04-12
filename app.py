@@ -290,11 +290,6 @@ def verify_magic_link(token):
         flash('Invalid or expired magic link.', 'danger')
         return redirect(url_for('home'))
 
-@app.route('/create-db')
-def create_db():
-    db.create_all()
-    return 'Database created!'
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
