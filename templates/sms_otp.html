@@ -3,10 +3,26 @@
 <div class="container mt-4">
     <h2>Set up SMS Verification</h2>
     <form method="POST">
+
         <div class="mb-3">
-            <label for="phone">Phone Number</label>
+            <label for="country">Select Country</label>
+            <select name="country_code" class="form-select" required>
+                <option value="">-- Select Country --</option>
+                <option value="+44">United Kingdom (+44)</option>
+                <option value="+1">United States (+1)</option>
+                <option value="+61">Australia (+61)</option>
+                <option value="+91">India (+91)</option>
+                <option value="+49">Germany (+49)</option>
+                <option value="+33">France (+33)</option>
+                <!-- Add more countries as needed -->
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="phone">Phone Number (without country code)</label>
             <input type="text" name="phone" class="form-control" required>
         </div>
+
         <button type="submit" class="btn btn-primary">Send OTP</button>
     </form>
 </div>

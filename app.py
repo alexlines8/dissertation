@@ -18,10 +18,8 @@ from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 
-db.init_app(app)
+
 bcrypt = Bcrypt(app)
 
 login_manager = LoginManager(app)
@@ -38,6 +36,9 @@ app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
+app.config['SECRET_KEY'] = 'your-secret-key'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+db.init_app(app)
 mail = Mail(app)
 
 
@@ -89,28 +90,33 @@ def logout():
 @login_required
 def sms_otp():
     if request.method == 'POST':
-        phone = request.form.get('phone', '').strip()
+        country_code = request.form.get('country_code', '').strip()
+        phone_local = request.form.get('phone', '').strip()
 
-        if not phone.startswith('+') or not phone[1:].isdigit():
-            flash('Invalid phone number format. Please use international format, e.g., +447123456789.', 'danger')
+        # Basic validation
+        if not country_code or not phone_local.isdigit():
+            flash('Invalid input. Please select a country and enter a valid phone number.', 'danger')
             return redirect(url_for('sms_otp'))
 
+        full_phone = f"{country_code}{phone_local}"
+
         otp = str(random.randint(100000, 999999))
-        current_user.phone_number = phone
         session['otp'] = otp
-        current_user.otp = otp  # Add this attribute dynamically
+        current_user.phone_number = full_phone
         db.session.commit()
 
         # Send SMS
         twilio_client.messages.create(
             body=f'Your verification code is: {otp}',
             from_=twilio_phone_number,
-            to=phone
+            to=full_phone
         )
 
         flash('OTP sent to your phone number.', 'success')
         return redirect(url_for('verify_sms_otp'))
+
     return render_template('sms_otp.html')
+
 
 # Route: Verify OTP
 @app.route('/verify-sms-otp', methods=['GET', 'POST'])
@@ -283,8 +289,6 @@ def verify_magic_link(token):
     else:
         flash('Invalid or expired magic link.', 'danger')
         return redirect(url_for('home'))
-
-
 
 @app.route('/create-db')
 def create_db():
