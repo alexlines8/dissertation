@@ -1,14 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4">
-    <h2>Set up Authenticator App</h2>
-    <p>Scan this QR code with your authenticator app:</p>
-    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code">
+<div class="container mt-4 text-center">
+    <h2>Set Up App-Based OTP (TOTP)</h2>
+    <p class="lead">Use an authenticator app like <strong>Google Authenticator</strong> or <strong>Authy</strong> to scan the QR code below and receive time-based verification codes.</p>
 
-    <form method="POST" action="{{ url_for('verify_totp') }}" class="mt-4">
+    <h4 class="mt-4">Scan this QR code with your app:</h4>
+    <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" class="mb-3">
+
+    <form method="POST">
         <div class="mb-3">
-            <label for="otp">Enter OTP from your app</label>
-            <input type="text" name="otp" class="form-control" required>
+            <label for="otp">Enter the 6-digit code from your app:</label>
+            <input type="text" name="otp_input" class="form-control text-center" required>
         </div>
         <button type="submit" class="btn btn-success">Verify OTP</button>
     </form>

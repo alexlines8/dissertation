@@ -11,7 +11,7 @@ class User(UserMixin, db.Model):
     phone_number = db.Column(db.String(20), unique=False, nullable=True)
     sms_mfa_completed = db.Column(db.Boolean, default=False)
     email_mfa_completed = db.Column(db.Boolean, default=False)
-    totp_secret = db.Column(db.String(16), nullable=True)
+    totp_secret = db.Column(db.String(64), nullable=True)
     totp_mfa_completed = db.Column(db.Boolean, default=False)
     magic_link_completed = db.Column(db.Boolean, default=False)
 
