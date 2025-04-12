@@ -14,7 +14,6 @@
                 <option value="+91">India (+91)</option>
                 <option value="+49">Germany (+49)</option>
                 <option value="+33">France (+33)</option>
-                <!-- Add more countries as needed -->
             </select>
         </div>
 
@@ -23,7 +22,32 @@
             <input type="text" name="phone" class="form-control" required>
         </div>
 
-        <button type="submit" class="btn btn-primary">Send OTP</button>
+        <button type="submit" class="btn btn-primary" id="send-btn">Send OTP</button>
     </form>
+
+    <button class="btn btn-secondary mt-3" id="resend-btn" style="display: none;" onclick="location.reload();">
+        Resend OTP (<span id="countdown">30</span>s)
+    </button>
 </div>
+
+<script>
+// Countdown timer
+let countdown = 30;
+let resendBtn = document.getElementById('resend-btn');
+let countdownDisplay = document.getElementById('countdown');
+
+document.getElementById('send-btn').addEventListener('click', function() {
+    setTimeout(() => {
+        resendBtn.style.display = 'inline-block';
+        const interval = setInterval(() => {
+            countdown -= 1;
+            countdownDisplay.textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                resendBtn.textContent = 'Resend OTP';
+            }
+        }, 1000);
+    }, 500); // slight delay to show after form submission
+});
+</script>
 {% endblock %}
