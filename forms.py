@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Email
 from models import User
+from wtforms.validators import Regexp
 
 class RegisterForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=5, max=100)])
@@ -22,3 +23,10 @@ class LoginForm(FlaskForm):
 class EmailOTPForm(FlaskForm):
     email = StringField('Email Address', validators=[DataRequired(), Email()])
     submit = SubmitField('Send OTP')
+
+class VerifyEmailOTPForm(FlaskForm):
+    otp_input = StringField('Enter OTP', validators=[
+        DataRequired(),
+        Regexp(r'^\d{6}$', message='Invalid OTP format. Please enter a 6-digit code.')
+    ])
+    submit = SubmitField('Verify OTP')

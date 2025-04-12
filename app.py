@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from models import db, User
-from forms import RegisterForm, LoginForm, EmailOTPForm
+from forms import RegisterForm, LoginForm, EmailOTPForm, VerifyEmailOTPForm
 from twilio.rest import Client
 import os
 import random
@@ -166,25 +166,23 @@ def email_otp():
 @app.route('/verify-email-otp', methods=['GET', 'POST'])
 @login_required
 def verify_email_otp():
-    if request.method == 'POST':
-        otp_input = request.form.get('otp', '').strip()
+    form = VerifyEmailOTPForm()
 
-        if not otp_input.isdigit() or len(otp_input) != 6:
-            flash('Invalid OTP format. Please enter a 6-digit number.', 'danger')
-            return redirect(url_for('verify_email_otp'))
+    if form.validate_on_submit():
+        otp_input = form.otp_input.data
+        expected_otp = session.get('email_otp')
 
-        if otp_input == session.get('email_otp'):
-            current_user.email = session.get('email_address')
+        if otp_input == expected_otp:
             current_user.email_mfa_completed = True
             db.session.commit()
-            session.pop('email_otp', None)
-            session.pop('email_address', None)
-            flash('Email verified successfully!', 'success')
+            flash('Email OTP verified successfully!', 'success')
             return redirect(url_for('home'))
         else:
             flash('Invalid OTP. Please try again.', 'danger')
+            return redirect(url_for('verify_email_otp'))
 
-    return render_template('verify_email_otp.html')
+    return render_template('verify_email_otp.html', form=form)
+
 
 @app.route('/totp-setup')
 @login_required
