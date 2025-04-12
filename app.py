@@ -36,7 +36,7 @@ app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
-app.config['SECRET_KEY'] = 'your-secret-key'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 db.init_app(app)
 mail = Mail(app)
