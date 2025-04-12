@@ -3,16 +3,13 @@
 <div class="container mt-4 text-center">
     <h2>Set Up App-Based OTP (TOTP)</h2>
     <p class="lead">Use an authenticator app like <strong>Google Authenticator</strong> or <strong>Authy</strong> to scan the QR code below and receive time-based verification codes.</p>
+    <p>After scanning, click the button below to enter the code from your app.</p>
 
     <h4 class="mt-4">Scan this QR code with your app:</h4>
     <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" class="mb-3">
 
-    <form method="POST">
-        <div class="mb-3">
-            <label for="otp">Enter the 6-digit code from your app:</label>
-            <input type="text" name="otp_input" class="form-control text-center" required>
-        </div>
-        <button type="submit" class="btn btn-success">Verify OTP</button>
-    </form>
+    <div class="mt-4">
+        <a href="{{ url_for('verify_totp') }}" class="btn btn-primary">Enter Verification Code</a>
+    </div>
 </div>
 {% endblock %}

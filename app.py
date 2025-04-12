@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from models import db, User
-from forms import RegisterForm, LoginForm, EmailOTPForm, VerifyEmailOTPForm
+from forms import RegisterForm, LoginForm, EmailOTPForm, VerifyEmailOTPForm, VerifyTOTPForm
 from twilio.rest import Client
 import os
 import random
@@ -187,13 +187,13 @@ def verify_email_otp():
 @app.route('/totp-setup')
 @login_required
 def totp_setup():
-    # Generate a secret key for the user
+    # Generate a secret key for the user if not already
     if not current_user.totp_secret:
         current_user.totp_secret = pyotp.random_base32()
         db.session.commit()
 
     # Generate provisioning URI for QR code
-    otp_uri = pyotp.totp.TOTP(current_user.totp_secret).provisioning_uri(
+    otp_uri = pyotp.TOTP(current_user.totp_secret).provisioning_uri(
         name=current_user.username,
         issuer_name='MFA App'
     )
@@ -207,20 +207,28 @@ def totp_setup():
 
     return render_template('totp_setup.html', qr_code=img_base64)
 
-@app.route('/verify-totp', methods=['POST'])
+
+@app.route('/verify-totp', methods=['GET', 'POST'])
 @login_required
 def verify_totp():
-    otp_input = request.form.get('otp', '').strip()
+    form = VerifyTOTPForm()
 
-    totp = pyotp.TOTP(current_user.totp_secret)
-    if totp.verify(otp_input):
-        current_user.totp_mfa_completed = True
-        db.session.commit()
-        flash('Authenticator app verified successfully!', 'success')
-        return redirect(url_for('home'))
-    else:
-        flash('Invalid OTP. Please try again.', 'danger')
-        return redirect(url_for('totp_setup'))
+    if form.validate_on_submit():
+        otp_input = form.otp_input.data.strip()
+
+        totp = pyotp.TOTP(current_user.totp_secret)
+        if totp.verify(otp_input):
+            current_user.totp_mfa_completed = True
+            db.session.commit()
+            flash('Authenticator app verified successfully!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('Invalid OTP. Please try again.', 'danger')
+            return redirect(url_for('verify_totp'))
+
+    return render_template('verify_totp.html', form=form)
+
+
 
 
 @app.route('/magic-link', methods=['GET', 'POST'])

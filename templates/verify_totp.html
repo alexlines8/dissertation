@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4 text-center">
+    <h2>Verify Authenticator App Code</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.otp_input.label(class="form-label") }}
+            {{ form.otp_input(class="form-control text-center") }}
+            {% for error in form.otp_input.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        {{ form.submit(class="btn btn-success") }}
+    </form>
+</div>
+{% endblock %}

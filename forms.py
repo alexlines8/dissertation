@@ -30,3 +30,10 @@ class VerifyEmailOTPForm(FlaskForm):
         Regexp(r'^\d{6}$', message='Invalid OTP format. Please enter a 6-digit code.')
     ])
     submit = SubmitField('Verify OTP')
+
+class VerifyTOTPForm(FlaskForm):
+    otp_input = StringField('Enter OTP', validators=[
+        DataRequired(),
+        Regexp(r'^\d{6}$', message='Invalid OTP format. Please enter a 6-digit code.')
+    ])
+    submit = SubmitField('Verify OTP')
