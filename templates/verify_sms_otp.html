@@ -1,13 +1,38 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 text-center">
     <h2>Verify SMS OTP</h2>
-    <form method="POST">
+    <form method="POST" class="mb-3">
         <div class="mb-3">
             <label for="otp">Enter OTP</label>
-            <input type="text" name="otp" class="form-control" required>
+            <input type="text" name="otp" class="form-control text-center" required>
         </div>
         <button type="submit" class="btn btn-success">Verify OTP</button>
     </form>
+
+    <div class="mt-4">
+        <p id="countdown-text">You can resend the code in <span id="countdown">30</span> seconds.</p>
+        <button class="btn btn-secondary" id="resend-btn" style="display: none;" onclick="location.href='{{ url_for('sms_otp') }}'">
+            Resend OTP
+        </button>
+    </div>
 </div>
+
+<script>
+// Countdown timer for resend button
+let countdown = 30;
+const countdownText = document.getElementById('countdown-text');
+const countdownDisplay = document.getElementById('countdown');
+const resendBtn = document.getElementById('resend-btn');
+
+const timer = setInterval(() => {
+    countdown -= 1;
+    countdownDisplay.textContent = countdown;
+    if (countdown <= 0) {
+        clearInterval(timer);
+        countdownText.style.display = 'none';
+        resendBtn.style.display = 'inline-block';
+    }
+}, 1000);
+</script>
 {% endblock %}

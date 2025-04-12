@@ -106,12 +106,12 @@ def sms_otp():
         db.session.commit()
 
         # Send SMS
-        print(otp)
-        #twilio_client.messages.create(
-        #    body=f'Your verification code is: {otp}',
-        #    from_=twilio_phone_number,
-        #    to=full_phone
-        #)
+
+        twilio_client.messages.create(
+            body=f'Your verification code is: {otp}',
+            from_=twilio_phone_number,
+            to=full_phone
+        )
 
         flash('OTP sent to your phone number.', 'success')
         return redirect(url_for('verify_sms_otp'))
