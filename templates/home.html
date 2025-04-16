@@ -6,79 +6,78 @@
       <h2 class="card-title text-primary">Multi-Factor Authentication Experiment</h2>
       <p class="card-text">Follow these steps to complete the experiment:</p>
 
-    <ol class="list-group">
+      <ol class="list-group">
+
         <!-- Step 1: Register -->
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            Step 1: Register an Account
-            {% if current_user.is_authenticated %}
-                <span class="badge bg-success">✅</span>
-            {% else %}
-                <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Register</a>
-            {% endif %}
+          Step 1: Register an Account
+          {% if current_user.is_authenticated %}
+            <span class="badge bg-success">✅</span>
+          {% else %}
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Register</a>
+          {% endif %}
         </li>
 
         <!-- Step 2: Log In -->
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            Step 2: Log In
-            {% if current_user.is_authenticated %}
-                <span class="badge bg-success">✅</span>
-            {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm">Log In</a>
-            {% endif %}
+          Step 2: Log In
+          {% if current_user.is_authenticated %}
+            <span class="badge bg-success">✅</span>
+          {% else %}
+            <span class="text-muted">Register to continue</span>
+          {% endif %}
         </li>
 
-        <!-- Step 3: Set Up MFA -->
+        <!-- Step 3: SMS OTP -->
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            Step 3: SMS OTP
-            {% if current_user.is_authenticated and current_user.sms_mfa_completed%}
-                <span class="badge bg-success">✅</span>
-            {% elif current_user.is_authenticated%}
-                <a href="{{ url_for('sms_otp') }}" class="btn btn-primary btn-sm">Set Up SMS OTP</a>
-            {% else %}
-                <span class="text-muted">Login to set up SMS OTP</span>
-            {% endif %}
-
-            <!-- Step 4: Email OTP Setup -->
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                Step 4: Email OTP Setup
-                {% if current_user.is_authenticated and current_user.email_mfa_completed %}
-                    <span class="badge bg-success">✅</span>
-                {% elif current_user.is_authenticated %}
-                    <a href="{{ url_for('email_otp') }}" class="btn btn-primary btn-sm">Set up Email OTP</a>
-                {% else %}
-                    <span class="text-muted">Login to set up Email OTP</span>
-                {% endif %}
-            </li>
-
-                    <!-- Step: Authenticator App OTP -->
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                Step 5: Authenticator App OTP
-                {% if current_user.is_authenticated and current_user.totp_mfa_completed %}
-                    <span class="badge bg-success">✅</span>
-                {% elif current_user.is_authenticated %}
-                    <a href="{{ url_for('totp_setup') }}" class="btn btn-primary btn-sm">Set up Authenticator App</a>
-                {% else %}
-                    <span class="text-muted">Login to set up Authenticator App</span>
-                {% endif %}
-            </li>
-
-            <!-- Step: Magic Link -->
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                Step 6: Magic Link Verification
-                {% if current_user.is_authenticated and current_user.magic_link_completed %}
-                    <span class="badge bg-success">✅</span>
-                {% elif current_user.is_authenticated %}
-                    <a href="{{ url_for('magic_link') }}" class="btn btn-primary btn-sm">Send Magic Link</a>
-                {% else %}
-                    <span class="text-muted">Login to set up Magic Link</span>
-                {% endif %}
-            </li>
-
-
-
+          Step 3: SMS OTP
+          {% if current_user.is_authenticated and current_user.sms_mfa_completed %}
+            <span class="badge bg-success">✅</span>
+          {% elif current_user.is_authenticated %}
+            <a href="{{ url_for('sms_otp') }}" class="btn btn-primary btn-sm">Set Up SMS OTP</a>
+          {% else %}
+            <span class="text-muted">Login to continue</span>
+          {% endif %}
         </li>
-    </ol>
-</div>
-</div>
+
+        <!-- Step 4: Email OTP -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Step 4: Email OTP
+          {% if current_user.is_authenticated and current_user.sms_mfa_completed and current_user.email_mfa_completed %}
+            <span class="badge bg-success">✅</span>
+          {% elif current_user.is_authenticated and current_user.sms_mfa_completed %}
+            <a href="{{ url_for('email_otp') }}" class="btn btn-primary btn-sm">Set Up Email OTP</a>
+          {% else %}
+            <span class="text-muted">Complete previous step first</span>
+          {% endif %}
+        </li>
+
+        <!-- Step 5: Authenticator App OTP -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Step 5: Authenticator App
+          {% if current_user.is_authenticated and current_user.email_mfa_completed and current_user.totp_mfa_completed %}
+            <span class="badge bg-success">✅</span>
+          {% elif current_user.is_authenticated and current_user.email_mfa_completed %}
+            <a href="{{ url_for('totp_setup') }}" class="btn btn-primary btn-sm">Set Up Authenticator App</a>
+          {% else %}
+            <span class="text-muted">Complete previous step first</span>
+          {% endif %}
+        </li>
+
+        <!-- Step 6: Magic Link -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Step 6: Magic Link
+          {% if current_user.is_authenticated and current_user.totp_mfa_completed and current_user.magic_link_completed %}
+            <span class="badge bg-success">✅</span>
+          {% elif current_user.is_authenticated and current_user.totp_mfa_completed %}
+            <a href="{{ url_for('magic_link') }}" class="btn btn-primary btn-sm">Send Magic Link</a>
+          {% else %}
+            <span class="text-muted">Complete previous step first</span>
+          {% endif %}
+        </li>
+
+      </ol>
+    </div>
+  </div>
 </div>
 {% endblock %}
