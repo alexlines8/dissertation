@@ -15,6 +15,7 @@ import io
 import base64
 import uuid
 from datetime import datetime, timedelta
+from flask_migrate import Migrate
 
 
 app = Flask(__name__)
@@ -39,6 +40,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 db.init_app(app)
+migrate = Migrate(app,db)
 mail = Mail(app)
 
 
