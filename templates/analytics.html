@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Your MFA Analytics</h2>
+    {% if data %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Failed Attempts</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                    <tr>
+                        <td>{{ row.method }}</td>
+                        <td>{{ row.failed_attempts }}</td>
+                        <td>{{ row.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

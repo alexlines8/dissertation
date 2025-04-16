@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, url_for, flash, request, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from models import db, User
+from models import db, User, MFAAnalytics
 from forms import RegisterForm, LoginForm, EmailOTPForm, VerifyEmailOTPForm, VerifyTOTPForm
 from twilio.rest import Client
 import os
@@ -126,17 +126,39 @@ def sms_otp():
 @login_required
 def verify_sms_otp():
     if request.method == 'POST':
-        otp_input = request.form.get('otp', '').strip()
-        if otp_input == session.get('otp'):
+        otp_input = request.form.get('otp').strip()
+        expected_otp = session.get('otp')
+
+        # Initialize if not already set
+        if 'sms_failed_attempts' not in session:
+            session['sms_failed_attempts'] = 0
+
+        if otp_input == expected_otp:
+
+            analytics = MFAAnalytics(
+                user_id=current_user.id,
+                method='sms',
+                failed_attempts=session['sms_failed_attempts']
+            )
+            db.session.add(analytics)
+            db.session.commit()
+
+            session.pop('sms_failed_attempts', None)
+            flash('SMS OTP verified successfully!', 'success')
             current_user.sms_mfa_completed = True
             db.session.commit()
-            session.pop('otp', None)  # clear OTP from session
-            flash('Phone number verified successfully!', 'success')
+
             return redirect(url_for('home'))
 
         else:
+            # ❌ Wrong code – increment error count
+            session['sms_failed_attempts'] += 1
             flash('Invalid OTP. Please try again.', 'danger')
+            return redirect(url_for('verify_sms_otp'))
+
+    # outside of if request.method == 'POST':
     return render_template('verify_sms_otp.html')
+
 
 
 @app.route('/email-otp', methods=['GET', 'POST'])
@@ -168,6 +190,9 @@ def email_otp():
 @app.route('/verify-email-otp', methods=['GET', 'POST'])
 @login_required
 def verify_email_otp():
+    if 'email_failed_attempts' not in session:
+        session['email_failed_attempts'] = 0
+
     form = VerifyEmailOTPForm()
 
     if form.validate_on_submit():
@@ -175,11 +200,24 @@ def verify_email_otp():
         expected_otp = session.get('email_otp')
 
         if otp_input == expected_otp:
+            failed_attempts = session.get('email_failed_attempts', 0)
+
+            # ✅ Save to analytics table
+            analytics = MFAAnalytics(
+                user_id=current_user.id,
+                method='email',
+                failed_attempts=failed_attempts
+            )
+            db.session.add(analytics)
+            db.session.commit()
+            session.pop('email_failed_attempts', None)
+
             current_user.email_mfa_completed = True
             db.session.commit()
             flash('Email OTP verified successfully!', 'success')
             return redirect(url_for('home'))
         else:
+            session['email_failed_attempts'] += 1
             flash('Invalid OTP. Please try again.', 'danger')
             return redirect(url_for('verify_email_otp'))
 
@@ -314,6 +352,15 @@ def forbidden_error(error):
 def run_migrations():
     upgrade()
     return 'Migrations applied successfully!'
+
+@app.route('/analytics')
+@login_required  # Optional – remove if you want it public
+def analytics():
+    from models import MFAAnalytics
+    analytics_data = MFAAnalytics.query.order_by(MFAAnalytics.timestamp.desc()).all()
+    return render_template('analytics.html', data=analytics_data)
+
+
 
 if __name__ == '__main__':
     with app.app_context():
