@@ -43,6 +43,15 @@ db.init_app(app)
 migrate = Migrate(app,db)
 mail = Mail(app)
 
+def log_magic_link_analytics(success=True):
+    from models import MFAAnalytics
+    record = MFAAnalytics(
+        user_id=current_user.id,
+        method='magic_link',
+        failed_attempts=0 if success else 1
+    )
+    db.session.add(record)
+    db.session.commit()
 
 
 @login_manager.user_loader
@@ -251,6 +260,9 @@ def totp_setup():
 @app.route('/verify-totp', methods=['GET', 'POST'])
 @login_required
 def verify_totp():
+    if 'totp_failed_attempts' not in session:
+        session['totp_failed_attempts'] = 0
+
     form = VerifyTOTPForm()
 
     if form.validate_on_submit():
@@ -258,11 +270,24 @@ def verify_totp():
 
         totp = pyotp.TOTP(current_user.totp_secret)
         if totp.verify(otp_input):
+
+            failed_attempts = session.get('totp_failed_attempts', 0)
+
+            analytics = MFAAnalytics(
+                user_id=current_user.id,
+                method='totp',
+                failed_attempts=failed_attempts
+            )
+            db.session.add(analytics)
+            db.session.commit()
             current_user.totp_mfa_completed = True
             db.session.commit()
+            session.pop('totp_failed_attempts', None)
+
             flash('Authenticator app verified successfully!', 'success')
             return redirect(url_for('home'))
         else:
+            session['totp_failed_attempts'] += 1
             flash('Invalid OTP. Please try again.', 'danger')
             return redirect(url_for('verify_totp'))
 
@@ -310,14 +335,15 @@ def verify_magic_link(token):
     timestamp_str = session.get('magic_link_timestamp')
     if not timestamp_str:
         flash('Invalid or expired magic link.', 'danger')
+        log_magic_link_analytics(success=False)
         return redirect(url_for('home'))
 
     timestamp = datetime.fromisoformat(timestamp_str)
     now = datetime.utcnow()
 
-    # Check if the link has expired (older than 15 minutes)
-    if now - timestamp > timedelta(minutes=15):
+    if now - timestamp > timedelta(minutes=1):
         flash('Magic link has expired. Please request a new one.', 'danger')
+        log_magic_link_analytics(success=False)
         session.pop('magic_link_token', None)
         session.pop('magic_link_email', None)
         session.pop('magic_link_timestamp', None)
@@ -326,13 +352,20 @@ def verify_magic_link(token):
     if token == session.get('magic_link_token'):
         current_user.magic_link_completed = True
         db.session.commit()
+
+        log_magic_link_analytics(success=True)
+
         session.pop('magic_link_token', None)
         session.pop('magic_link_email', None)
+        session.pop('magic_link_timestamp', None)
+
         flash('Magic link verified successfully!', 'success')
         return redirect(url_for('home'))
     else:
         flash('Invalid or expired magic link.', 'danger')
+        log_magic_link_analytics(success=False)
         return redirect(url_for('home'))
+
 
 
 # Error Handlers
