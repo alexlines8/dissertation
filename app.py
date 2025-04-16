@@ -44,11 +44,14 @@ migrate = Migrate(app,db)
 mail = Mail(app)
 
 def log_magic_link_analytics(success=True):
-    from models import MFAAnalytics
+    start_str = session.get('link_start_time')
+    start_time = datetime.fromisoformat(start_str)
+    seconds_taken = (datetime.utcnow() - start_time).total_seconds()
     record = MFAAnalytics(
         user_id=current_user.id,
         method='magic_link',
-        failed_attempts=0 if success else 1
+        failed_attempts=0 if success else 1,
+        time_taken=seconds_taken
     )
     db.session.add(record)
     db.session.commit()
@@ -251,6 +254,8 @@ def verify_email_otp():
 @app.route('/totp-setup')
 @login_required
 def totp_setup():
+    if 'totp_start_time' not in session:
+        session['totp_start_time'] = datetime.utcnow().isoformat()
     # Generate a secret key for the user if not already
     if not current_user.totp_secret:
         current_user.totp_secret = pyotp.random_base32()
@@ -285,18 +290,23 @@ def verify_totp():
 
         totp = pyotp.TOTP(current_user.totp_secret)
         if totp.verify(otp_input):
+            start_str = session.get('totp_start_time')
+            start_time = datetime.fromisoformat(start_str)
+            seconds_taken = (datetime.utcnow() - start_time).total_seconds()
 
             failed_attempts = session.get('totp_failed_attempts', 0)
 
             analytics = MFAAnalytics(
                 user_id=current_user.id,
                 method='totp',
-                failed_attempts=failed_attempts
+                failed_attempts=failed_attempts,
+                time_taken = seconds_taken
             )
             db.session.add(analytics)
             db.session.commit()
             current_user.totp_mfa_completed = True
             db.session.commit()
+            session.pop('totp_start_time', None)
             session.pop('totp_failed_attempts', None)
 
             flash('Authenticator app verified successfully!', 'success')
@@ -314,6 +324,8 @@ def verify_totp():
 @app.route('/magic-link', methods=['GET', 'POST'])
 @login_required
 def magic_link():
+    if 'link_start_time' not in session:
+        session['link_start_time'] = datetime.utcnow().isoformat()
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
 
@@ -356,7 +368,7 @@ def verify_magic_link(token):
     timestamp = datetime.fromisoformat(timestamp_str)
     now = datetime.utcnow()
 
-    if now - timestamp > timedelta(minutes=1):
+    if now - timestamp > timedelta(minutes=15):
         flash('Magic link has expired. Please request a new one.', 'danger')
         log_magic_link_analytics(success=False)
         session.pop('magic_link_token', None)
@@ -373,6 +385,7 @@ def verify_magic_link(token):
         session.pop('magic_link_token', None)
         session.pop('magic_link_email', None)
         session.pop('magic_link_timestamp', None)
+        session.pop('link_start_time', None)
 
         flash('Magic link verified successfully!', 'success')
         return redirect(url_for('home'))
@@ -396,10 +409,6 @@ def internal_error(error):
 def forbidden_error(error):
     return render_template('403.html'), 403
 
-@app.route('/run-migrations')
-def run_migrations():
-    upgrade()
-    return 'Migrations applied successfully!'
 
 @app.route('/analytics')
 @login_required  # Optional – remove if you want it public
