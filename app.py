@@ -15,7 +15,7 @@ import io
 import base64
 import uuid
 from datetime import datetime, timedelta
-from flask_migrate import Migrate
+from flask_migrate import Migrate,upgrade
 
 
 app = Flask(__name__)
@@ -309,6 +309,11 @@ def internal_error(error):
 @app.errorhandler(403)
 def forbidden_error(error):
     return render_template('403.html'), 403
+
+@app.route('/run-migrations')
+def run_migrations():
+    upgrade()
+    return 'Migrations applied successfully!'
 
 if __name__ == '__main__':
     with app.app_context():
