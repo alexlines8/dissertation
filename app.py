@@ -100,6 +100,8 @@ def logout():
 @app.route('/sms-otp', methods=['GET', 'POST'])
 @login_required
 def sms_otp():
+    if 'sms_start_time' not in session:
+        session['sms_start_time'] = datetime.utcnow().isoformat()
     if request.method == 'POST':
         country_code = request.form.get('country_code', '').strip()
         phone_local = request.form.get('phone', '').strip().replace(' ', '').replace('-', '')
@@ -143,16 +145,22 @@ def verify_sms_otp():
             session['sms_failed_attempts'] = 0
 
         if otp_input == expected_otp:
+            start_str = session.get('sms_start_time')
+            start_time = datetime.fromisoformat(start_str)
+            seconds_taken = (datetime.utcnow() - start_time).total_seconds()
+
 
             analytics = MFAAnalytics(
                 user_id=current_user.id,
                 method='sms',
-                failed_attempts=session['sms_failed_attempts']
+                failed_attempts=session['sms_failed_attempts'],
+                time_taken=seconds_taken
             )
             db.session.add(analytics)
             db.session.commit()
 
             session.pop('sms_failed_attempts', None)
+            session.pop('sms_start_time', None)
             flash('SMS OTP verified successfully!', 'success')
             current_user.sms_mfa_completed = True
             db.session.commit()
@@ -173,6 +181,8 @@ def verify_sms_otp():
 @app.route('/email-otp', methods=['GET', 'POST'])
 @login_required
 def email_otp():
+    if 'email_start_time' not in session:
+        session['email_start_time'] = datetime.utcnow().isoformat()
     form = EmailOTPForm()
 
     if form.validate_on_submit():
@@ -209,17 +219,22 @@ def verify_email_otp():
         expected_otp = session.get('email_otp')
 
         if otp_input == expected_otp:
+            start_str = session.get('email_start_time')
+            start_time = datetime.fromisoformat(start_str)
+            seconds_taken = (datetime.utcnow() - start_time).total_seconds()
             failed_attempts = session.get('email_failed_attempts', 0)
 
             # ✅ Save to analytics table
             analytics = MFAAnalytics(
                 user_id=current_user.id,
                 method='email',
-                failed_attempts=failed_attempts
+                failed_attempts=failed_attempts,
+                time_taken=seconds_taken
             )
             db.session.add(analytics)
             db.session.commit()
             session.pop('email_failed_attempts', None)
+            session.pop('email_start_time', None)
 
             current_user.email_mfa_completed = True
             db.session.commit()

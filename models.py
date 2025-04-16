@@ -23,6 +23,7 @@ class MFAAnalytics(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     method = db.Column(db.String(50), nullable=False)  # e.g. 'sms', 'email', 'totp', 'magic_link'
     failed_attempts = db.Column(db.Integer, default=0)
+    time_taken = db.Column(db.Float)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
