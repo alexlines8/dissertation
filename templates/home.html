@@ -43,9 +43,9 @@
         <!-- Step 4: Email OTP -->
         <li class="list-group-item d-flex justify-content-between align-items-center">
           Step 4: Email OTP
-          {% if current_user.is_authenticated and current_user.sms_mfa_completed and current_user.email_mfa_completed %}
+          {% if current_user.is_authenticated and current_user.email_mfa_completed %}
             <span class="badge bg-success">✅</span>
-          {% elif current_user.is_authenticated and current_user.sms_mfa_completed %}
+          {% elif current_user.is_authenticated %}
             <a href="{{ url_for('email_otp') }}" class="btn btn-primary btn-sm">Set Up Email OTP</a>
           {% else %}
             <span class="text-muted">Complete previous step first</span>
@@ -55,9 +55,9 @@
         <!-- Step 5: Authenticator App OTP -->
         <li class="list-group-item d-flex justify-content-between align-items-center">
           Step 5: Authenticator App
-          {% if current_user.is_authenticated and current_user.email_mfa_completed and current_user.totp_mfa_completed %}
+          {% if current_user.is_authenticated and current_user.totp_mfa_completed %}
             <span class="badge bg-success">✅</span>
-          {% elif current_user.is_authenticated and current_user.email_mfa_completed %}
+          {% elif current_user.is_authenticated %}
             <a href="{{ url_for('totp_setup') }}" class="btn btn-primary btn-sm">Set Up Authenticator App</a>
           {% else %}
             <span class="text-muted">Complete previous step first</span>
@@ -67,9 +67,9 @@
         <!-- Step 6: Magic Link -->
         <li class="list-group-item d-flex justify-content-between align-items-center">
           Step 6: Magic Link
-          {% if current_user.is_authenticated and current_user.totp_mfa_completed and current_user.magic_link_completed %}
+          {% if current_user.is_authenticated and current_user.magic_link_completed %}
             <span class="badge bg-success">✅</span>
-          {% elif current_user.is_authenticated and current_user.totp_mfa_completed %}
+          {% elif current_user.is_authenticated %}
             <a href="{{ url_for('magic_link') }}" class="btn btn-primary btn-sm">Send Magic Link</a>
           {% else %}
             <span class="text-muted">Complete previous step first</span>

@@ -130,6 +130,8 @@ def sms_otp():
         )
 
         flash('OTP sent to your phone number.', 'success')
+        if country_code in ['+31', '+33']:  # US, NL, FR
+            flash("We are aware that users in some countries do not receive the codes properly. If so, please go back to home", "warning")
         return redirect(url_for('verify_sms_otp'))
 
     return render_template('sms_otp.html')
@@ -387,7 +389,8 @@ def verify_magic_link(token):
         session.pop('magic_link_timestamp', None)
         session.pop('link_start_time', None)
 
-        flash('Magic link verified successfully!', 'success')
+        flash('Magic link verified successfully! You are now complete with this stage of the experiment. Please complete the survey now.', 'success')
+
         return redirect(url_for('home'))
     else:
         flash('Invalid or expired magic link.', 'danger')
